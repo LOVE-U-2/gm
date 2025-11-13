@@ -1,0 +1,653 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>চলো চিনি — Stylish Quiz (Hard default)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg-1:#f6f9ff; --bg-2:#eefafb;
+    --panel-1: linear-gradient(135deg,#ffffff,#fffdf8);
+    --accent:#7b61ff; --accent2:#ff7a7a; --glass: rgba(255,255,255,0.65);
+    --muted:#6c6f76; --success:#2ecc71; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Poppins',system-ui, -apple-system, 'Segoe UI', Roboto, Arial;background: linear-gradient(180deg,var(--bg-1),var(--bg-2));color:#1f2430}
+  .wrap{max-width:1100px;margin:18px auto;padding:18px}
+  .card{background:var(--panel-1);border-radius:16px;box-shadow:0 20px 50px rgba(30,40,60,0.08);overflow:hidden}
+  header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(0,0,0,0.04)}
+  .brand{display:flex;align-items:center;gap:14px}
+  .logo{width:64px;height:64px;border-radius:14px;background:linear-gradient(135deg,var(--accent),#b98bff);display:grid;place-items:center;color:white;font-size:28px;box-shadow:0 12px 30px rgba(123,97,255,0.14)}
+  .title{font-weight:800;font-size:18px}
+  .subtitle{font-size:12px;color:var(--muted)}
+  .top-controls{display:flex;gap:10px;align-items:center}
+  .pill{background:var(--glass);padding:8px 12px;border-radius:999px;font-weight:700;backdrop-filter:blur(6px);box-shadow:0 6px 18px rgba(0,0,0,0.04)}
+  main{display:grid;grid-template-columns:1fr 360px;gap:18px;padding:18px}
+  @media (max-width:980px){ main{grid-template-columns:1fr} .side{order:2} }
+  /* game area */
+  .game-area{display:flex;flex-direction:column;gap:12px}
+  .viewport{background:linear-gradient(180deg,#dff6ff,#fff0f0);border-radius:12px;padding:14px;display:flex;flex-direction:column;gap:12px;box-shadow:inset 0 -10px 40px rgba(255,255,255,0.6)}
+  .display{display:flex;align-items:center;gap:12px}
+  .emoji-card{flex:0 0 180px;height:140px;border-radius:12px;background:linear-gradient(135deg,#ffffff,#fff6ef);display:grid;place-items:center;font-size:78px;box-shadow:0 10px 30px rgba(18,30,80,0.05)}
+  .question-meta{flex:1}
+  .progress-row{display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .timer{font-weight:800;color:var(--accent);font-size:20px}
+  .score{font-weight:800;font-size:22px;color:#222}
+  .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+  @media (max-width:560px){ .emoji-card{flex:0 0 130px;height:110px;font-size:64px} .choices{grid-template-columns:1fr} }
+  .choice-btn{background:#fff;border:1px solid rgba(0,0,0,0.04);padding:12px;border-radius:10px;font-weight:700;cursor:pointer;box-shadow:0 10px 30px rgba(2,6,23,0.03);transition:transform .12s, box-shadow .12s}
+  .choice-btn:hover{transform:translateY(-4px)}
+  .choice-btn.correct{background:linear-gradient(90deg,#eaffef,var(--success));border-color:rgba(0,0,0,0.04);box-shadow:0 12px 30px rgba(46,204,113,0.08)}
+  .choice-btn.wrong{background:linear-gradient(90deg,#fff0f0,var(--danger));border-color:rgba(0,0,0,0.04)}
+  .side{display:flex;flex-direction:column;gap:12px}
+  .panel{padding:14px;border-radius:12px;background:linear-gradient(180deg,#fff,#fffef6);box-shadow:0 10px 30px rgba(12,35,64,0.04)}
+  .category-grid{display:flex;gap:8px;flex-wrap:wrap}
+  .cat-btn{padding:8px 12px;border-radius:999px;background:transparent;border:1px solid rgba(0,0,0,0.06);cursor:pointer;font-weight:700}
+  .cat-btn.active{background:linear-gradient(90deg,var(--accent2),var(--accent));color:white;border:0}
+  .mode-row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+  .mode-btn{padding:8px 12px;border-radius:8px;border:1px solid rgba(0,0,0,0.06);cursor:pointer;background:transparent;font-weight:700}
+  .mode-btn.active{background:var(--accent);color:white;border:0;box-shadow:0 10px 20px rgba(123,97,255,0.12)}
+  .small{font-size:13px;color:var(--muted)}
+  .settings-row{display:flex;justify-content:space-between;align-items:center;gap:12px}
+  .toggle{display:inline-flex;align-items:center;gap:8px}
+  .btn{padding:10px 12px;border-radius:10px;border:0;cursor:pointer;font-weight:700}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),#b98bff);color:white}
+  .footer{padding:12px;text-align:center;color:#666}
+  /* confetti canvas overlay */
+  #confetti{position:absolute;left:0;top:0;pointer-events:none}
+  /* subtle animations */
+  .pulse{animation:pulse .9s ease-out 1}
+  @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.06)}100%{transform:scale(1)}}
+  /* responsive small helper */
+  .muted-note{font-size:12px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card" id="appCard">
+      <header>
+        <div class="brand">
+          <div class="logo" aria-hidden="true">🌟</div>
+          <div>
+            <div class="title">চলো চিনি — Stylish Quiz</div>
+            <div class="subtitle">Modern UI · Hard mode default · Touch friendly</div>
+          </div>
+        </div>
+        <div class="top-controls">
+          <div class="pill" id="lives">❤ x3</div>
+          <div class="pill" id="timeLeft">⏱ 60s</div>
+          <div class="pill" id="scoreP">⭐ 0</div>
+        </div>
+      </header>
+
+      <main>
+        <!-- LEFT: Game -->
+        <section class="game-area">
+          <div class="viewport" id="viewport" aria-live="polite" role="region">
+            <canvas id="confetti"></canvas>
+            <div class="display">
+              <div class="emoji-card" id="emojiCard" aria-hidden="true">🍎</div>
+              <div class="question-meta">
+                <div style="display:flex;gap:10px;align-items:center">
+                  <div class="timer" id="perTimer">⏳ 10</div>
+                  <div class="score small" id="displayScore">Score: 0</div>
+                </div>
+                <div class="muted-note" id="questionText">নিচে দেওয়া নাম টিপুন</div>
+                <div class="muted-note" id="progressText">Question 0 / 0</div>
+              </div>
+            </div>
+
+            <div class="choices" id="choices"></div>
+
+            <div style="display:flex;gap:10px;align-items:center;margin-top:6px">
+              <button id="nextBtn" class="btn primary" style="display:none">Next ➜</button>
+              <div style="flex:1"></div>
+              <div class="small muted-note">Tip: tap choices fast. Hard mode = 4 choices + per-question timer.</div>
+            </div>
+          </div>
+        </section>
+
+        <!-- RIGHT: Side options -->
+        <aside class="side">
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="small">Category</div>
+                <div style="font-weight:800;font-size:18px" id="currentCategory">Mixed</div>
+              </div>
+              <div style="text-align:right">
+                <div class="small">High Score</div>
+                <div style="font-weight:800;font-size:18px" id="highScore">0</div>
+              </div>
+            </div>
+
+            <hr style="margin:12px 0;border:none;height:1px;background:linear-gradient(90deg,transparent,#eee,transparent)">
+
+            <div class="small">Choose category</div>
+            <div class="category-grid" id="categoryGrid" style="margin-top:8px">
+              <!-- buttons injected -->
+            </div>
+
+            <div style="height:12px"></div>
+            <div class="small">Difficulty</div>
+            <div class="mode-row" style="margin-top:8px">
+              <button class="mode-btn" data-mode="easy">Easy</button>
+              <button class="mode-btn active" data-mode="medium">Medium</button>
+              <button class="mode-btn active" data-mode="hard">Hard</button>
+            </div>
+            <div class="muted-note" style="margin-top:8px">Hard = 4 choices + per-question countdown (default)</div>
+          </div>
+
+          <div class="panel">
+            <div style="display:flex;justify-content:space-between;align-items:center">
+              <div>
+                <div class="small">Voice Pronunciation</div>
+                <div class="muted-note">Speak correct names (toggle)</div>
+              </div>
+              <div>
+                <label class="toggle"><input type="checkbox" id="voiceToggle" checked> <span style="margin-left:8px;font-weight:700">On</span></label>
+              </div>
+            </div>
+
+            <hr style="margin:12px 0;border:none;height:1px;background:linear-gradient(90deg,transparent,#eee,transparent)">
+
+            <div style="display:flex;gap:8px;align-items:center">
+              <button id="startGame" class="btn primary">Start Game</button>
+              <button id="resetBtn" class="btn" style="border:1px solid #eee">Reset</button>
+            </div>
+
+            <div style="margin-top:10px" class="small muted-note">
+              Styles: Gradient premium UI, responsive layout, tap zones for mobile. Change category or difficulty then press Start.
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="small">Stats</div>
+            <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+              <div style="flex:1">
+                <div class="small">Questions</div>
+                <div style="font-weight:800" id="statQ">0</div>
+              </div>
+              <div style="flex:1">
+                <div class="small">Correct</div>
+                <div style="font-weight:800;color:var(--success)" id="statCorrect">0</div>
+              </div>
+            </div>
+          </div>
+        </aside>
+      </main>
+
+      <div class="footer">Made with ❤️ — tap a category, press Start, enjoy!</div>
+    </div>
+  </div>
+
+<script>
+/* Full single-file game script
+   Hard mode default:
+   - 4 choices
+   - per-question timer (10s)
+   - categories + mixed
+   - voice pronounce (toggle)
+*/
+
+const DATA = [
+  // FRUITS
+  {name:"আপেল", emoji:"🍎", category:"Fruits"},
+  {name:"কলা", emoji:"🍌", category:"Fruits"},
+  {name:"স্ট্রবেরি", emoji:"🍓", category:"Fruits"},
+  {name:"আম", emoji:"🥭", category:"Fruits"},
+  {name:"কমলা", emoji:"🍊", category:"Fruits"},
+  {name:"আনারস", emoji:"🍍", category:"Fruits"},
+  {name:"লিচু", emoji:"🍒", category:"Fruits"},
+  {name:"পেঁপে", emoji:"🍑", category:"Fruits"},
+
+  // FLOWERS
+  {name:"গোলাপ", emoji:"🌹", category:"Flowers"},
+  {name:"সূর্যমুখী", emoji:"🌻", category:"Flowers"},
+  {name:"জবা", emoji:"🌺", category:"Flowers"},
+  {name:"শাপলা", emoji:"🌸", category:"Flowers"},
+  {name:"গাঁদা", emoji:"🌼", category:"Flowers"},
+
+  // ANIMALS
+  {name:"হাতি", emoji:"🐘", category:"Animals"},
+  {name:"বাঘ", emoji:"🐅", category:"Animals"},
+  {name:"কুকুর", emoji:"🐕", category:"Animals"},
+  {name:"বিড়াল", emoji:"🐈", category:"Animals"},
+  {name:"ঘোড়া", emoji:"🐴", category:"Animals"},
+  {name:"বানর", emoji:"🐒", category:"Animals"},
+  {name:"ভেড়া", emoji:"🐑", category:"Animals"},
+  {name:"শেয়াল", emoji:"🦊", category:"Animals"},
+
+  // BIRDS
+  {name:"পাখি", emoji:"🐦", category:"Birds"},
+  {name:"তোতা", emoji:"🦜", category:"Birds"},
+  {name:"ঘুঘু", emoji:"🕊️", category:"Birds"},
+  {name:"মুরগি", emoji:"🐓", category:"Birds"},
+
+  // VEGETABLES
+  {name:"টমেটো", emoji:"🍅", category:"Vegetables"},
+  {name:"গাজর", emoji:"🥕", category:"Vegetables"},
+  {name:"আলু", emoji:"🥔", category:"Vegetables"},
+  {name:"বেগুন", emoji:"🍆", category:"Vegetables"},
+  {name:"পেঁয়াজ", emoji:"🧅", category:"Vegetables"},
+  {name:"ভুট্টা", emoji:"🌽", category:"Vegetables"},
+  {name:"মরিচ", emoji:"🌶️", category:"Vegetables"},
+
+  // FOOD ITEMS
+  {name:"ভাত", emoji:"🍚", category:"Food"},
+  {name:"রুটি", emoji:"🍞", category:"Food"},
+  {name:"ডিম", emoji:"🥚", category:"Food"},
+  {name:"দুধ", emoji:"🥛", category:"Food"},
+  {name:"মাছ", emoji:"🐟", category:"Food"},
+  {name:"মাংস", emoji:"🍖", category:"Food"},
+
+  // VEHICLES
+  {name:"গাড়ি", emoji:"🚗", category:"Vehicles"},
+  {name:"বাস", emoji:"🚌", category:"Vehicles"},
+  {name:"ট্রেন", emoji:"🚆", category:"Vehicles"},
+  {name:"সাইকেল", emoji:"🚲", category:"Vehicles"},
+  {name:"নৌকা", emoji:"⛵", category:"Vehicles"},
+  {name:"বিমান", emoji:"✈️", category:"Vehicles"},
+
+  // SHAPES
+  {name:"বৃত্ত", emoji:"⚪", category:"Shapes"},
+  {name:"ত্রিভুজ", emoji:"🔺", category:"Shapes"},
+  {name:"বর্গ", emoji:"⬜", category:"Shapes"},
+  {name:"তারকা", emoji:"⭐", category:"Shapes"},
+
+  // COLORS
+  {name:"লাল", emoji:"🟥", category:"Colors"},
+  {name:"নীল", emoji:"🟦", category:"Colors"},
+  {name:"সবুজ", emoji:"🟩", category:"Colors"},
+  {name:"হলুদ", emoji:"🟨", category:"Colors"},
+
+  // OBJECTS / TOYS
+  {name:"বল", emoji:"⚽", category:"Objects"},
+  {name:"বই", emoji:"📘", category:"Objects"},
+  {name:"পেন্সিল", emoji:"✏️", category:"Objects"},
+  {name:"ঘড়ি", emoji:"⌚", category:"Objects"},
+  {name:"চেয়ার", emoji:"🪑", category:"Objects"},
+  {name:"স্কুল ব্যাগ", emoji:"🎒", category:"Objects"},
+
+  // PLACES
+  {name:"স্কুল", emoji:"🏫", category:"Places"},
+  {name:"বাড়ি", emoji:"🏠", category:"Places"},
+  {name:"মসজিদ", emoji:"🕌", category:"Places"},
+  {name:"বাজার", emoji:"🛍️", category:"Places"},
+  {name:"সেতু", emoji:"🌉", category:"Places"},
+  {name:"মাঠ", emoji:"🌾", category:"Places"}
+];
+
+
+const CATEGORIES = ["Mixed","Fruits","Flowers","Animals","Birds"];
+const defaultMode = "hard"; // user chose 3 -> hard
+
+// UI refs
+const emojiCard = document.getElementById('emojiCard');
+const choicesEl = document.getElementById('choices');
+const nextBtn = document.getElementById('nextBtn');
+const perTimer = document.getElementById('perTimer');
+const displayScore = document.getElementById('displayScore');
+const progressText = document.getElementById('progressText');
+const questionText = document.getElementById('questionText');
+const timeLeftPill = document.getElementById('timeLeft');
+const livesPill = document.getElementById('lives');
+const scorePill = document.getElementById('scoreP');
+const highScoreEl = document.getElementById('highScore');
+const categoryGrid = document.getElementById('categoryGrid');
+const currentCategoryLabel = document.getElementById('currentCategory');
+const startGameBtn = document.getElementById('startGame');
+const resetBtn = document.getElementById('resetBtn');
+const voiceToggle = document.getElementById('voiceToggle');
+const modeButtons = document.querySelectorAll('.mode-btn');
+const statQ = document.getElementById('statQ');
+const statCorrect = document.getElementById('statCorrect');
+
+// confetti canvas
+const confettiCanvas = document.getElementById('confetti');
+const confettiCtx = confettiCanvas.getContext('2d');
+
+// game state
+let category = "Mixed";
+let difficulty = defaultMode; // easy / medium / hard
+let voiceOn = true;
+let questionCount = 20; // default per round
+let perQuestionTime = 10; // seconds for Hard
+let perTimerInterval = null;
+let perRemain = perQuestionTime;
+let gameRunning = false;
+let score = 0, lives = 3, totalAsked = 0, correctCount = 0;
+let currentQuestion = null;
+let choicesCount = 4; // hard = 4
+let questionPool = [];
+let highScoreKey = 'stylish_quiz_high_v1';
+let highScore = parseInt(localStorage.getItem(highScoreKey) || '0', 10);
+highScoreEl.textContent = highScore;
+
+// responsive confetti size
+function resizeConfetti(){
+  const vp = document.getElementById('viewport').getBoundingClientRect();
+  confettiCanvas.width = vp.width;
+  confettiCanvas.height = vp.height;
+}
+window.addEventListener('resize', resizeConfetti);
+resizeConfetti();
+
+// build category buttons
+function renderCategories(){
+  categoryGrid.innerHTML = '';
+  CATEGORIES.forEach(cat=>{
+    const b = document.createElement('button');
+    b.className = 'cat-btn' + (cat===category? ' active':'');
+    b.textContent = cat;
+    b.onclick = ()=>{ category = cat; currentCategoryLabel.textContent = cat; document.querySelectorAll('.cat-btn').forEach(x=>x.classList.remove('active')); b.classList.add('active'); };
+    categoryGrid.appendChild(b);
+  });
+}
+renderCategories();
+
+// difficulty buttons
+function setDifficulty(mode){
+  difficulty = mode;
+  modeButtons.forEach(m=> m.classList.toggle('active', m.dataset.mode===mode));
+  if(mode==='easy'){ choicesCount=2; perQuestionTime=20; }
+  else if(mode==='medium'){ choicesCount=3; perQuestionTime=15; }
+  else { choicesCount=4; perQuestionTime=10; }
+}
+modeButtons.forEach(b=> b.onclick = ()=> setDifficulty(b.dataset.mode));
+setDifficulty(defaultMode);
+
+// voice toggle
+voiceToggle.addEventListener('change', ()=> voiceOn = voiceToggle.checked);
+
+// helper: shuffle
+function shuffle(a){ for(let i=a.length-1;i>0;i--){ const j = Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]] } return a; }
+
+// prepare pool based on category
+function buildPool(){
+  if(category === "Mixed") questionPool = DATA.slice();
+  else questionPool = DATA.filter(d=> d.category === category);
+  // ensure enough items: duplicate briefly if needed
+  while(questionPool.length < 10) questionPool = questionPool.concat(questionPool.slice());
+  questionPool = shuffle(questionPool);
+}
+
+// speak text (safely)
+function speak(text){
+  if(!voiceOn) return;
+  if('speechSynthesis' in window){
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = 'bn-IN'; // Bengali variant if available
+    u.rate = 0.95;
+    window.speechSynthesis.cancel();
+    window.speechSynthesis.speak(u);
+  }
+}
+
+// choose next question
+function nextQuestion(){
+  if(!gameRunning) return;
+  if(questionPool.length === 0) buildPool();
+  currentQuestion = questionPool.pop();
+  totalAsked++;
+  // pick choices
+  const candidates = DATA.filter(d => d.name !== currentQuestion.name);
+  const picked = shuffle(candidates).slice(0, choicesCount-1).map(d=>d.name);
+  const all = shuffle([currentQuestion.name, ...picked]);
+  // render
+  emojiCard.textContent = currentQuestion.emoji;
+  questionText.textContent = `এই আইটেমটি কোনটির নাম?`;
+  progressText.textContent = `Question ${totalAsked} / ${questionCount}`;
+  displayScore.textContent = `Score: ${score}`;
+  // build choices
+  choicesEl.innerHTML = '';
+  all.forEach(opt=>{
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = opt;
+    btn.onclick = ()=> handleChoice(btn, opt);
+    choicesEl.appendChild(btn);
+  });
+  // start per-question timer
+  startPerTimer();
+  // auto-speak
+  speak(currentQuestion.name);
+  // stats
+  statQ.textContent = totalAsked;
+}
+
+// handle user's choice
+function handleChoice(btn, choice){
+  if(!gameRunning) return;
+  // disable all
+  Array.from(choicesEl.children).forEach(b=> b.disabled = true);
+  stopPerTimer();
+  if(choice === currentQuestion.name){
+    btn.classList.add('correct');
+    score++; correctCount++;
+    // small visual pulse
+    btn.classList.add('pulse');
+    // confetti burst
+    burstConfetti(50);
+    speak(currentQuestion.name);
+  } else {
+    btn.classList.add('wrong');
+    // mark correct
+    const corr = Array.from(choicesEl.children).find(b => b.textContent === currentQuestion.name);
+    if(corr) corr.classList.add('correct');
+    lives--;
+    speak(currentQuestion.name);
+  }
+  updatePills();
+  // show next button or auto-advance
+  nextBtn.style.display = 'inline-block';
+  // increment stats
+  statCorrect.textContent = correctCount;
+  // check end conditions
+  if(lives <= 0) {
+    // brief delay to show result then end
+    setTimeout(()=> endGame(), 700);
+    return;
+  }
+  if(totalAsked >= questionCount){
+    setTimeout(()=> endGame(), 700);
+    return;
+  }
+}
+
+// start per-question countdown
+function startPerTimer(){
+  perRemain = perQuestionTime;
+  perTimer.textContent = `⏳ ${Math.ceil(perRemain)}`;
+  clearInterval(perTimerInterval);
+  perTimerInterval = setInterval(()=>{
+    perRemain -= 0.2;
+    perTimer.textContent = `⏳ ${Math.max(0, Math.ceil(perRemain))}`;
+    if(perRemain <= 0){
+      clearInterval(perTimerInterval);
+      // treat as miss
+      Array.from(choicesEl.children).forEach(b=> b.disabled = true);
+      const corr = Array.from(choicesEl.children).find(b => b.textContent === currentQuestion.name);
+      if(corr) corr.classList.add('correct');
+      lives--;
+      updatePills();
+      if(lives <= 0) { setTimeout(()=> endGame(), 700); return; }
+      nextBtn.style.display = 'inline-block';
+    }
+  }, 200);
+}
+
+function stopPerTimer(){
+  clearInterval(perTimerInterval);
+  perTimerInterval = null;
+}
+
+// UI helpers
+function updatePills(){
+  livesPill.textContent = `❤ x${lives}`;
+  scorePill.textContent = `⭐ ${score}`;
+  timeLeftPill.textContent = `⏱ ${Math.max(0, Math.ceil((questionCount-totalAsked)*perQuestionTime))}s`;
+  displayScore.textContent = `Score: ${score}`;
+  highScoreEl.textContent = highScore;
+}
+
+// start game flow
+startGameBtn.addEventListener('click', ()=>{
+  // reset
+  score = 0; lives = 3; totalAsked = 0; correctCount = 0;
+  questionCount = 20; // could make adjustable
+  gameRunning = true;
+  nextBtn.style.display = 'none';
+  buildPool();
+  updatePills();
+  nextQuestion();
+});
+
+// reset
+resetBtn.addEventListener('click', ()=> {
+  gameRunning = false;
+  stopPerTimer();
+  questionPool = [];
+  score = 0; lives = 3; totalAsked = 0; correctCount = 0;
+  choicesEl.innerHTML = '';
+  emojiCard.textContent = '🍎';
+  perTimer.textContent = `⏳ ${perQuestionTime}`;
+  progressText.textContent = 'Question 0 / 0';
+  updatePills();
+});
+
+// next button
+nextBtn.addEventListener('click', ()=>{
+  nextBtn.style.display = 'none';
+  if(!gameRunning) return;
+  if(totalAsked >= questionCount){ endGame(); return; }
+  nextQuestion();
+});
+
+// mode buttons (allow changing on the fly)
+document.querySelectorAll('.mode-btn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    setDifficulty(btn.dataset.mode);
+  });
+});
+function setDifficulty(mode){
+  // find buttons and toggle
+  document.querySelectorAll('.mode-btn').forEach(b=> b.classList.toggle('active', b.dataset.mode===mode));
+  setDifficultyInternal(mode);
+}
+function setDifficultyInternal(mode){
+  difficulty = mode;
+  if(mode === 'easy'){ choicesCount = 2; perQuestionTime = 20; }
+  else if(mode === 'medium'){ choicesCount = 3; perQuestionTime = 15; }
+  else { choicesCount = 4; perQuestionTime = 10; } // hard
+  perTimer.textContent = `⏳ ${perQuestionTime}`;
+}
+
+// confetti (simple)
+let confettiPieces = [];
+function burstConfetti(n=80){
+  const vp = document.getElementById('viewport').getBoundingClientRect();
+  confettiPieces = [];
+  for(let i=0;i<n;i++){
+    confettiPieces.push({
+      x: Math.random()*vp.width,
+      y: Math.random()*-vp.height,
+      vx: (Math.random()-0.5)*3,
+      vy: Math.random()*4+2,
+      r: Math.random()*8+4,
+      color: `hsl(${Math.random()*360},80%,60%)`,
+      life: Math.random()*1200+600
+    });
+  }
+  requestAnimationFrame(renderConfetti);
+}
+let lastConfetti=0;
+function renderConfetti(ts){
+  if(!lastConfetti) lastConfetti = ts;
+  const dt = ts - lastConfetti; lastConfetti = ts;
+  const vp = document.getElementById('viewport').getBoundingClientRect();
+  confettiCtx.clearRect(0,0, confettiCanvas.width, confettiCanvas.height);
+  for(let i = confettiPieces.length-1; i>=0; i--){
+    const p = confettiPieces[i];
+    p.x += p.vx * (dt/16);
+    p.y += p.vy * (dt/16);
+    p.vy += 0.05*(dt/16);
+    p.life -= dt;
+    confettiCtx.fillStyle = p.color;
+    confettiCtx.fillRect(p.x, p.y, p.r, p.r*0.6);
+    if(p.life <= 0 || p.y > vp.height + 50) confettiPieces.splice(i,1);
+  }
+  if(confettiPieces.length>0) requestAnimationFrame(renderConfetti);
+  else lastConfetti = 0;
+}
+
+// end game
+function endGame(){
+  gameRunning = false;
+  stopPerTimer();
+  // compare high score
+  if(score > highScore){ highScore = score; localStorage.setItem(highScoreKey, String(highScore)); }
+  highScoreEl.textContent = highScore;
+  updatePills();
+  // show results panel (non-blocking)
+  showResultOverlay();
+}
+
+function showResultOverlay(){
+  const overlay = document.createElement('div');
+  Object.assign(overlay.style, {position:'fixed',left:0,top:0,right:0,bottom:0,display:'grid',placeItems:'center',background:'rgba(0,0,0,0.36)',zIndex:9999});
+  overlay.innerHTML = `
+    <div style="background:#fff;padding:18px;border-radius:12px;max-width:360px;text-align:center;box-shadow:0 20px 50px rgba(16,24,40,0.2)">
+      <div style="font-weight:800;font-size:20px;margin-bottom:8px">Round Complete</div>
+      <div style="margin-bottom:10px">Score: <strong>${score}</strong> · Correct: <strong>${correctCount}</strong></div>
+      <div style="margin-bottom:12px">High Score: <strong>${highScore}</strong></div>
+      <div style="display:flex;gap:8px;justify-content:center">
+        <button id="playAgain" style="padding:8px 12px;border-radius:8px;border:0;background:linear-gradient(90deg,var(--accent),#b98bff);color:#fff;font-weight:700">Play Again</button>
+        <button id="closeRes" style="padding:8px 12px;border-radius:8px;border:1px solid #eee;background:#fff">Close</button>
+      </div>
+    </div>
+  `;
+  document.body.appendChild(overlay);
+  document.getElementById('playAgain').addEventListener('click', ()=>{
+    document.body.removeChild(overlay);
+    startGameBtn.click();
+  });
+  document.getElementById('closeRes').addEventListener('click', ()=>{
+    document.body.removeChild(overlay);
+  });
+}
+
+// small resume audio on gesture
+['click','touchstart','keydown'].forEach(ev=> window.addEventListener(ev, ()=> {
+  if(window.speechSynthesis && window.speechSynthesis.paused) window.speechSynthesis.resume();
+}));
+
+// keyboard shortcuts (optional)
+window.addEventListener('keydown', (e)=> {
+  if(!gameRunning) return;
+  if(e.key >= '1' && e.key <= '4'){
+    const idx = parseInt(e.key)-1;
+    const btn = choicesEl.children[idx];
+    if(btn) btn.click();
+  }
+});
+
+// auto-advance next when Next hidden & answering quickly
+// (not needed; handled by user via Next or auto end)
+
+// initialize UI values
+function init(){
+  setDifficultyInternal(defaultMode);
+  renderCategories();
+  updatePills();
+  // show a sample question (idle)
+  emojiCard.textContent = DATA[0].emoji;
+  perTimer.textContent = `⏳ ${perQuestionTime}`;
+  progressText.textContent = `Question 0 / 0`;
+}
+init();
+
+</script>
+</body>
+</html>

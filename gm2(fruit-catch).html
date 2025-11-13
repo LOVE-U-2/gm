@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Catch the Fruit</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg1:#9be7ff;--bg2:#e8f8ff;--card:#ffffff;--accent:#ff7a7a;--accent2:#ffb86b;--muted:#6b6b6b;--glass: rgba(255,255,255,0.7);} 
+*{box-sizing:border-box}
+html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#222}
+.container{width:100%;max-width:1100px;margin:28px auto;padding:18px}
+.card{background:linear-gradient(180deg,var(--card),#fff);border-radius:18px;box-shadow:0 18px 40px rgba(12,35,64,0.12);overflow:hidden}
+.header{display:flex;align-items:center;justify-content:space-between;padding:18px 22px;background:linear-gradient(90deg,#fff7f7,#fff8e9)}
+.title{display:flex;align-items:center;gap:14px}
+.logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,#ffd3d3,#fff2b2);display:flex;align-items:center;justify-content:center;font-size:26px;box-shadow:0 8px 22px rgba(255,107,107,0.12)}
+.title h1{margin:0;font-size:20px}
+.meta{display:flex;gap:10px;align-items:center}
+.pill{background:var(--glass);padding:8px 12px;border-radius:999px;font-weight:700;backdrop-filter: blur(6px);box-shadow:0 6px 18px rgba(0,0,0,0.05)}
+.main{display:grid;grid-template-columns:1fr 340px;gap:18px;padding:20px}
+@media (max-width:960px){.main{grid-template-columns:1fr;}}
+.game-area{padding:12px;border-radius:12px}
+.canvas-wrap{position:relative;background:linear-gradient(180deg,#c9f2ff,#ffdfe6);padding:18px;border-radius:14px;box-shadow:inset 0 -12px 40px rgba(255,255,255,0.4)}
+canvas{display:block;width:100%;height:520px;border-radius:10px;background:transparent}
+.controls{display:flex;gap:10px;align-items:center;margin-top:12px}
+button{border:0;padding:10px 14px;border-radius:12px;font-weight:700;cursor:pointer}
+.btn-primary{background:linear-gradient(90deg,var(--accent),#ff9a9a);color:#fff;box-shadow:0 10px 30px rgba(255,122,122,0.18)}
+.btn-ghost{background:transparent;border:1px solid rgba(0,0,0,0.06);color:#333}
+.hint{margin-top:10px;font-size:13px;color:var(--muted)}
+.side{display:flex;flex-direction:column;gap:12px}
+.panel{background:linear-gradient(180deg,#fff,#fffef6);padding:14px;border-radius:12px;box-shadow:0 10px 30px rgba(12,35,64,0.04)}
+.stat-big{font-size:36px;font-weight:800;color:#333;text-align:center}
+.stat-small{font-size:13px;color:var(--muted);text-align:center}
+.progress{height:12px;background:#f2f2f2;border-radius:99px;overflow:hidden}
+.progress > i{display:block;height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0%}
+.legend{display:flex;gap:8px;justify-content:center;padding-top:8px}
+.legend span{font-size:22px}
+.footer{padding:12px;text-align:center;color:#666}
+/* cute shadow for fruits when falling */
+.floating-ui{position:absolute;right:18px;top:18px;pointer-events:none}
+.kbd{background:#fff;padding:6px 8px;border-radius:8px;font-weight:800}
+.confetti{position:absolute;left:0;top:0;width:100%;height:100%;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="container">
+  <div class="card">
+    <div class="header">
+      <div class="title">
+        <div class="logo">🍓</div>
+        <div>
+          <h1>Catch the Fruit — Polished Cartoon</h1>
+          <div style="font-size:12px;color:#555;margin-top:4px">Cute, responsive, mobile-friendly — grab fruits and beat the clock!</div>
+        </div>
+      </div>
+      <div class="meta">
+        <div class="pill" id="lives">❤ x3</div>
+        <div class="pill" id="time">⏱ 60s</div>
+        <div class="pill" id="score">⭐ 0</div>
+      </div>
+    </div>
+
+    <div class="main">
+      <section class="game-area">
+        <div class="canvas-wrap">
+          <canvas id="gameCanvas" width="900" height="520" aria-label="Game canvas"></canvas>
+          <canvas id="confetti" class="confetti" width="900" height="520"></canvas>
+        </div>
+
+        <div class="controls">
+          <button id="startBtn" class="btn-primary">Start</button>
+          <button id="pauseBtn" class="btn-ghost">Pause</button>
+          <button id="muteBtn" class="btn-ghost">🔊</button>
+          <div style="flex:1"></div>
+          <div class="hint">Move: Mouse / Touch / ← → keys — <span class="kbd">Tap</span> left/right on mobile</div>
+        </div>
+
+        <div class="legend" aria-hidden="true">
+          <span>🍎</span><span>🍊</span><span>🍇</span><span>🍌</span><span>🍓</span>
+        </div>
+      </section>
+
+      <aside class="side">
+        <div class="panel">
+          <div class="stat-small">Score</div>
+          <div class="stat-big" id="scoreBig">0</div>
+
+          <div style="display:flex;gap:12px;margin-top:10px;align-items:center;justify-content:space-between">
+            <div>
+              <div class="stat-small">Level</div>
+              <div style="font-weight:800;font-size:22px" id="levelBig">1</div>
+            </div>
+            <div style="flex:1">
+              <div class="stat-small">Progress</div>
+              <div class="progress"><i id="progressBar"></i></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="stat-small">How to play</div>
+          <div style="margin-top:8px;font-size:14px;color:#444">
+            Move the basket left/right to catch falling fruits. Each caught fruit +1 point. Miss = lose a life. Beat the clock!
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="stat-small">High Score</div>
+          <div style="font-size:20px;font-weight:800" id="highScore">0</div>
+          <div style="margin-top:8px;font-size:12px;color:#777">Made with ❤️ — polished UI</div>
+        </div>
+      </aside>
+    </div>
+
+    <div class="footer">Tip: Play fullscreen on mobile for best experience 🎮</div>
+  </div>
+</div>
+
+<script>
+(()=>{
+  const canvas = document.getElementById('gameCanvas');
+  const ctx = canvas.getContext('2d');
+  const confettiCanvas = document.getElementById('confetti');
+  const cctx = confettiCanvas.getContext('2d');
+  const startBtn = document.getElementById('startBtn');
+  const pauseBtn = document.getElementById('pauseBtn');
+  const muteBtn = document.getElementById('muteBtn');
+  const scoreLabel = document.getElementById('score');
+  const scoreBig = document.getElementById('scoreBig');
+  const levelBig = document.getElementById('levelBig');
+  const livesLabel = document.getElementById('lives');
+  const timeLabel = document.getElementById('time');
+  const highScoreEl = document.getElementById('highScore');
+  const progressBar = document.getElementById('progressBar');
+
+  // resolution
+  function fit(){
+    const ratio = devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = Math.max(600, rect.width*ratio);
+    canvas.height = Math.max(360, 520*ratio);
+    confettiCanvas.width = canvas.width; confettiCanvas.height = canvas.height;
+    canvas.style.height = (canvas.width/ (900)) * 520 + 'px';
+  }
+  window.addEventListener('resize', fit); fit();
+
+  let running=false, paused=false, muted=false;
+  let score=0, lives=3, level=1, timeLeft=60, elapsed=0;
+  let fruits=[], basket={x:canvas.width/2,y:canvas.height-80,w:220,h:46};
+  const emojiList=['🍎','🍊','🍇','🍌','🍓','🍉','🥝','🍍'];
+  const highScoreKey='catchFruitHighScore_v2';
+  let highScore = parseInt(localStorage.getItem(highScoreKey)||'0',10); highScoreEl.textContent=highScore;
+
+  // audio: tiny helper
+  const AudioCtx = window.AudioContext||window.webkitAudioContext;
+  const audioCtx = AudioCtx? new AudioCtx():null;
+  function beep(freq=440,tm=0.06){ if(!audioCtx||muted) return; const o=audioCtx.createOscillator(); const g=audioCtx.createGain(); o.type='sine'; o.frequency.value=freq; o.connect(g); g.connect(audioCtx.destination); g.gain.value=0.06; o.start(); o.stop(audioCtx.currentTime+tm); }
+
+  function rand(min,max){return Math.random()*(max-min)+min}
+  function spawnFruit(){ const size = rand(32,62); const x = rand(30, canvas.width-30); const speed = rand(100,260) + (level-1)*25; const emoji=emojiList[Math.floor(Math.random()*emojiList.length)]; fruits.push({x,y:-80,vy:speed/1000,size,emoji}); }
+
+  let spawnInterval = 900; let spawnTimer=0; let last=0;
+
+  function reset(){ score=0; lives=3; level=1; timeLeft=60; fruits=[]; spawnInterval=900; spawnTimer=0; elapsed=0; updateUI(); }
+
+  function updateUI(){ scoreLabel.textContent='⭐ '+score; scoreBig.textContent=score; levelBig.textContent=level; livesLabel.textContent='❤ x'+lives; timeLabel.textContent='⏱ '+Math.max(0,Math.ceil(timeLeft))+'s'; progressBar.style.width = Math.min(100, ((60-timeLeft)/60)*100)+'%'; }
+
+  function endGame(){ running=false; paused=false; startBtn.textContent='Start'; if(score>highScore){ highScore=score; localStorage.setItem(highScoreKey,String(highScore)); highScoreEl.textContent=highScore; } // celebratory confetti
+    burstConfetti(); setTimeout(()=>{ alert('Game Over!
+Score: '+score+'
+High Score: '+highScore+'
+Play again!'); },140);
+  }
+
+  function gameLoop(ts){ if(!running||paused){ last=ts; requestAnimationFrame(gameLoop); return; } if(!last) last=ts; const dt = (ts-last); last=ts; elapsed+=dt; spawnTimer+=dt; timeLeft -= dt/1000;
+    if(spawnTimer>=spawnInterval){ spawnTimer=0; spawnFruit(); if(spawnInterval>320) spawnInterval *= 0.985; }
+    // update
+    for(let f of fruits) f.y += f.vy * dt;
+    // collisions
+    for(let i=fruits.length-1;i>=0;i--){ const f=fruits[i]; const bx=basket.x - basket.w/2; const by=basket.y - basket.h/2; if(f.y + f.size/2 >= by && f.x >= bx && f.x <= bx + basket.w){ // caught
+        score++; fruits.splice(i,1); beep(880,0.06); const newLevel=Math.floor(score/10)+1; if(newLevel>level){ level=newLevel; // level up animation
+            pulseConfetti(); beep(1200,0.08); }
+      } else if(f.y - f.size/2 > canvas.height + 30){ fruits.splice(i,1); lives--; beep(220,0.08); if(lives<=0){ updateUI(); endGame(); return; } }
+    }
+    updateUI(); draw(); if(timeLeft<=0){ endGame(); return; } requestAnimationFrame(gameLoop);
+  }
+
+  function draw(){ ctx.clearRect(0,0,canvas.width,canvas.height);
+    // sky background gradient
+    const g = ctx.createLinearGradient(0,0,0,canvas.height); g.addColorStop(0,'#b8f0ff'); g.addColorStop(1,'#fff6f3'); ctx.fillStyle=g; ctx.fillRect(0,0,canvas.width,canvas.height);
+
+    // soft clouds (simple circles)
+    drawCloud(ctx, 120,80,120); drawCloud(ctx, canvas.width-180,110,140); drawCloud(ctx, canvas.width*0.5,60,90);
+
+    // ground
+    ctx.fillStyle='#fff6e6'; ctx.fillRect(0, canvas.height*0.72, canvas.width, canvas.height*0.28);
+
+    // fruits
+    for(let f of fruits){ ctx.font = Math.floor(f.size)+'px serif'; ctx.textAlign='center'; ctx.textBaseline='middle'; ctx.fillText(f.emoji, f.x, f.y);
+      // shadow
+      ctx.beginPath(); ctx.ellipse(f.x+12, f.y+f.size/2 + 10, f.size/3, f.size/10, 0, 0, Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.06)'; ctx.fill(); }
+
+    // basket (cute rounded rectangle with rim)
+    const bx = basket.x - basket.w/2; const by = basket.y - basket.h/2;
+    roundRect(ctx, bx, by, basket.w, basket.h, 18); ctx.fillStyle='#6a4bff'; ctx.fill();
+    // rim
+    ctx.fillStyle='#ffd6d6'; ctx.fillRect(bx, by-8, basket.w, 14);
+    // lines
+    ctx.strokeStyle='rgba(255,255,255,0.06)'; for(let i=1;i<6;i++){ ctx.beginPath(); ctx.moveTo(bx + i*(basket.w/6), by); ctx.lineTo(bx + i*(basket.w/6), by + basket.h); ctx.stroke(); }
+
+    // basket cute shadow
+    ctx.beginPath(); ctx.ellipse(basket.x+12, basket.y + basket.h/2 + 12, basket.w/2.2, 18, 0, 0, Math.PI*2); ctx.fillStyle='rgba(0,0,0,0.08)'; ctx.fill();
+  }
+
+  function drawCloud(ctx,x,y,size){ ctx.save(); ctx.fillStyle='rgba(255,255,255,0.95)'; ctx.beginPath(); ctx.ellipse(x, y, size*0.6, size*0.45, 0, 0, Math.PI*2); ctx.ellipse(x+size*0.4, y+4, size*0.5, size*0.36, 0, 0, Math.PI*2); ctx.ellipse(x-size*0.45, y+6, size*0.45, size*0.32, 0, 0, Math.PI*2); ctx.fill(); ctx.restore(); }
+  function roundRect(ctx,x,y,w,h,r){ ctx.beginPath(); ctx.moveTo(x+r,y); ctx.arcTo(x+w,y,x+w,y+h,r); ctx.arcTo(x+w,y+h,x,y+h,r); ctx.arcTo(x,y+h,x,y,r); ctx.arcTo(x,y,x+w,y,r); ctx.closePath(); }
+
+  // input
+  function clamp(v,a,b){ return Math.max(a, Math.min(b, v)); }
+  canvas.addEventListener('mousemove', (e)=>{ const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left)*(canvas.width/rect.width); basket.x = clamp(mx, basket.w/2, canvas.width - basket.w/2); });
+  canvas.addEventListener('touchmove',(e)=>{ e.preventDefault(); const t=e.touches[0]; const rect=canvas.getBoundingClientRect(); const mx=(t.clientX-rect.left)*(canvas.width/rect.width); basket.x=clamp(mx,basket.w/2,canvas.width-basket.w/2); },{passive:false});
+  window.addEventListener('keydown',(e)=>{ if(e.key==='ArrowLeft') basket.x -= 40; if(e.key==='ArrowRight') basket.x += 40; basket.x = clamp(basket.x,basket.w/2,canvas.width-basket.w/2); });
+  canvas.addEventListener('click',(e)=>{ if(!running) return; const rect = canvas.getBoundingClientRect(); const mx = e.clientX - rect.left; if(mx < rect.width/2) basket.x -= 90; else basket.x += 90; basket.x = clamp(basket.x,basket.w/2,canvas.width-basket.w/2); });
+
+  // UI buttons
+  startBtn.addEventListener('click', ()=>{ if(!running){ reset(); running=true; paused=false; startBtn.textContent='Restart'; last=0; requestAnimationFrame(gameLoop); } else { reset(); running=true; paused=false; last=0; requestAnimationFrame(gameLoop); } });
+  pauseBtn.addEventListener('click', ()=>{ if(!running) return; paused = !paused; pauseBtn.textContent = paused? 'Resume':'Pause'; if(!paused){ last=0; requestAnimationFrame(gameLoop); } });
+  muteBtn.addEventListener('click', ()=>{ muted = !muted; muteBtn.textContent = muted? '🔇':'🔊'; });
+
+  // confetti system
+  let confettiPieces=[];
+  function burstConfetti(){ confettiPieces=[]; for(let i=0;i<120;i++){ confettiPieces.push({x:rand(0,confettiCanvas.width), y:rand(-200,0), vx:rand(-1,1), vy:rand(2,6), r:rand(4,10), color:`hsl(${rand(0,360)},90%,55%)`, life:rand(800,2000)}); } animateConfetti(); }
+  function pulseConfetti(){ confettiPieces=[]; for(let i=0;i<50;i++){ confettiPieces.push({x:rand(confettiCanvas.width*0.3,confettiCanvas.width*0.7), y:rand(confettiCanvas.height*0.2,confettiCanvas.height*0.5), vx:rand(-1,1), vy:rand(-1,4), r:rand(4,8), color:`hsl(${rand(0,360)},90%,55%)`, life:rand(400,1000)}); } animateConfetti(); }
+  let confettiLast=0; function animateConfetti(ts){ if(!confettiLast) confettiLast=ts; const dt = ts-confettiLast; confettiLast=ts; cctx.clearRect(0,0,confettiCanvas.width,confettiCanvas.height); for(let i=confettiPieces.length-1;i>=0;i--){ const p=confettiPieces[i]; p.x += p.vx*dt; p.y += p.vy*dt; p.vy += 0.004*dt; p.life -= dt; cctx.fillStyle=p.color; cctx.fillRect(p.x,p.y,p.r, p.r*0.6); if(p.life<=0 || p.y>confettiCanvas.height+50) confettiPieces.splice(i,1); } if(confettiPieces.length>0) requestAnimationFrame(animateConfetti); else confettiLast=0; }
+
+  // initial demo loop when idle
+  let demoLast=0, demoTimer=0;
+  function demoLoop(ts){ if(running) return; if(!demoLast) demoLast=ts; const dt=ts-demoLast; demoLast=ts; demoTimer+=dt; if(demoTimer>900){ spawnFruit(); demoTimer=0; } // gentle auto move
+    const t=(ts/1000)%4; basket.x = canvas.width/2 + Math.sin(t*Math.PI)*220; for(let i=fruits.length-1;i>=0;i--){ fruits[i].y += fruits[i].vy * dt; if(fruits[i].y - fruits[i].size/2 > canvas.height + 30) fruits.splice(i,1); } draw(); requestAnimationFrame(demoLoop);
+  }
+  requestAnimationFrame(demoLoop);
+
+  // resume audio on user gesture
+  ['click','touchstart','keydown'].forEach(ev=> window.addEventListener(ev, ()=>{ if(audioCtx && audioCtx.state==='suspended') audioCtx.resume(); }));
+
+  // keep UI refreshed
+  setInterval(updateUI,200);
+
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kids Game Zone</title>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;700&family=Outfit:wght@500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg-gradient: radial-gradient(circle at top left, #1e90ff, #4b0082, #000);
+  --card-bg: rgba(255,255,255,0.08);
+  --card-hover: rgba(255,255,255,0.15);
+  --text-main: #fff;
+  --glow-blue: #00e0ff;
+  --glow-pink: #ff00ff;
+  --glow-green: #00ffae;
+  --radius: 20px;
+  --shadow: 0 0 25px rgba(0,0,0,0.6);
+  --font-main: 'Outfit', sans-serif;
+  --font-fun: 'Fredoka', cursive;
+}
+
+*{box-sizing:border-box;margin:0;padding:0;transition:all .3s ease}
+
+body {
+  background: var(--bg-gradient);
+  min-height:100vh;
+  font-family:var(--font-main);
+  color:var(--text-main);
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:flex-start;
+  overflow-x:hidden;
+}
+
+/* Header */
+header {
+  text-align:center;
+  margin:50px 10px 30px;
+}
+
+header h1 {
+  font-size:2.8em;
+  font-family:var(--font-fun);
+  letter-spacing:2px;
+  color:#fff;
+  text-shadow:0 0 15px var(--glow-pink), 0 0 25px var(--glow-blue);
+}
+
+header p {
+  font-size:1.1em;
+  opacity:0.9;
+  color:#d4eaff;
+}
+
+/* Container */
+.container {
+  width:90%;
+  max-width:1100px;
+  display:grid;
+  gap:40px;
+  padding-bottom:80px;
+}
+
+/* Section Title */
+.section h2 {
+  text-align:center;
+  font-size:1.8em;
+  margin-bottom:25px;
+  background:linear-gradient(90deg, var(--glow-blue), var(--glow-pink));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Game Grid */
+.game-grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(250px,1fr));
+  gap:30px;
+}
+
+/* Card */
+.game-card {
+  background:var(--card-bg);
+  border-radius:var(--radius);
+  padding:25px 20px;
+  text-align:center;
+  box-shadow:var(--shadow);
+  border:2px solid rgba(255,255,255,0.1);
+  backdrop-filter:blur(12px);
+  position:relative;
+  overflow:hidden;
+}
+
+.game-card::after {
+  content:"";
+  position:absolute;
+  inset:0;
+  background:linear-gradient(45deg, transparent, rgba(255,255,255,0.1), transparent);
+  opacity:0;
+  transform:translateY(100%);
+  transition:all .4s ease;
+}
+
+.game-card:hover::after {
+  opacity:1;
+  transform:translateY(-100%);
+}
+
+.game-card:hover {
+  transform:translateY(-8px);
+  border-color:var(--glow-blue);
+  box-shadow:0 0 25px var(--glow-blue);
+}
+
+.game-card h3 {
+  font-size:1.3em;
+  margin:10px 0 8px;
+  color:#fff;
+}
+
+.game-card p {
+  font-size:0.95em;
+  opacity:0.85;
+  margin-bottom:15px;
+  color:#d9e4ff;
+}
+
+/* Button */
+.play-button {
+  display:inline-block;
+  padding:10px 25px;
+  border-radius:30px;
+  font-weight:700;
+  text-decoration:none;
+  color:#fff;
+  letter-spacing:0.5px;
+  background:linear-gradient(90deg, var(--glow-blue), var(--glow-green));
+  box-shadow:0 0 15px var(--glow-blue);
+  transition:all .3s ease;
+}
+
+.play-button:hover {
+  transform:scale(1.08);
+  background:linear-gradient(90deg, var(--glow-pink), var(--glow-blue));
+  box-shadow:0 0 25px var(--glow-pink);
+}
+
+/* Footer */
+footer {
+  text-align:center;
+  padding:25px;
+  font-size:0.9em;
+  color:#ccc;
+  border-top:1px solid rgba(255,255,255,0.1);
+  margin-top:auto;
+}
+
+@media (max-width:700px){
+  header h1{font-size:2.2em}
+  .section h2{font-size:1.4em}
+  .container{gap:30px}
+}
+</style>
+</head>
+
+<body>
+  <header>
+    <h1>✨ Kids Game Zone ✨</h1>
+    <p>Play. Learn. Shine — a modern fun world for kids!</p>
+  </header>
+
+  <div class="container">
+    <div class="section">
+      <h2>🧩 Puzzles & Logic</h2>
+      <div class="game-grid">
+        <div class="game-card">
+          <h3>Tic Tac Toe</h3>
+          <p>Classic strategy fun — test your brain vs AI!</p>
+          <a href="GM1(TOT).html" class="play-button">Play Now</a>
+        </div>
+        <div class="game-card">
+          <h3>Logic Math</h3>
+          <p>Solve fun math problems to boost your logic!</p>
+          <a href="gm5.html" class="play-button">Play Now</a>
+        </div>
+        </div>
+    </div>
+
+    <div class="section">
+      <h2>🚀 Action & Arcade</h2>
+      <div class="game-grid">
+        <div class="game-card">
+          <h3>Fruit Catcher</h3>
+          <p>Catch them fast! A fun arcade challenge.</p>
+          <a href="gm2(fruit-catch).html" class="play-button">Play Now</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>📚 Learning & Fun</h2>
+      <div class="game-grid">
+        <div class="game-card">
+          <h3>Choose Game</h3>
+          <p>Quick quiz to boost your knowledge power!</p>
+          <a href="gm3(choos).html" class="play-button">Play Now</a>
+        </div>
+
+        <div class="game-card">
+          <h3>Sound Guess</h3>
+          <p>Can you recognize all the cool sounds?</p>
+          <a href="GM4(sound).html" class="play-button">Play Now</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+   <footer>© 2025 Kids Game Zone • Designed for Bright Minds 🌟</footer>
+</body>
+</html>

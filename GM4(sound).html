@@ -1,0 +1,912 @@
+<!doctype html>
+<html lang="bn">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"/>
+<title>শোনো — Sound Guess Game (Kids)</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;600;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg1:#f5fbff; --bg2:#fff7f8;
+    --card:#ffffff; --accent:#6f5cff; --accent2:#ff7b7b;
+    --muted:#6b6f76; --success:#2ecc71; --danger:#ff6b6b;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%;margin:0;font-family:'Poppins',system-ui,-apple-system,'Segoe UI',Roboto,Arial;background:linear-gradient(180deg,var(--bg1),var(--bg2));color:#19202b}
+  .wrap{max-width:1000px;margin:18px auto;padding:12px}
+  .card{background:linear-gradient(180deg,var(--card),#fff);border-radius:14px;box-shadow:0 20px 40px rgba(15,20,40,0.06);overflow:hidden}
+  header{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;border-bottom:1px solid rgba(0,0,0,0.04)}
+  .brand{display:flex;align-items:center;gap:12px}
+  .logo{width:56px;height:56px;border-radius:12px;background:linear-gradient(135deg,var(--accent),#b78bff);display:grid;place-items:center;color:white;font-size:24px;box-shadow:0 8px 26px rgba(111,92,255,0.14)}
+  .title{font-weight:800}
+  .subtitle{font-size:12px;color:var(--muted)}
+  main{display:grid;grid-template-columns:1fr 320px;gap:12px;padding:16px}
+  @media (max-width:900px){ main{grid-template-columns:1fr} .side{order:2} }
+  .game-area{display:flex;flex-direction:column;gap:12px}
+  .panel{background:linear-gradient(180deg,#fff,#fffef6);border-radius:12px;padding:12px;box-shadow:0 10px 28px rgba(12,35,64,0.04)}
+  .playcard{display:flex;flex-direction:column;gap:12px;align-items:center;justify-content:center;border-radius:12px;padding:18px;background:linear-gradient(180deg,#f1fbff,#fff2f2);width:100%}
+  .sound-box{width:220px;height:220px;border-radius:16px;background:linear-gradient(135deg,#ffffff,#fff5ee);display:grid;place-items:center;font-size:70px;box-shadow:0 18px 40px rgba(6,12,30,0.04)}
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;justify-content:center}
+  .btn{padding:10px 14px;border-radius:10px;border:0;font-weight:700;cursor:pointer}
+  .btn.primary{background:linear-gradient(90deg,var(--accent),#a08cff);color:#fff}
+  .btn.ghost{background:transparent;border:1px solid rgba(0,0,0,0.06)}
+  .choices{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;width:100%;margin-top:6px}
+  @media (max-width:560px){ .choices{grid-template-columns:1fr} .sound-box{width:170px;height:170px;font-size:56px} }
+  .choice-btn{padding:12px;border-radius:10px;background:#fff;border:1px solid rgba(0,0,0,0.06);font-weight:800;cursor:pointer;box-shadow:0 10px 26px rgba(8,12,30,0.03);transition:transform .12s}
+  .choice-btn:hover{transform:translateY(-4px)}
+  .choice-btn.correct{background:linear-gradient(90deg,#eaffef,var(--success));box-shadow:0 12px 24px rgba(46,204,113,0.08)}
+  .choice-btn.wrong{background:linear-gradient(90deg,#fff0f0,var(--danger))}
+  .small{font-size:13px;color:var(--muted)}
+  .stat-row{display:flex;gap:8px;align-items:center;justify-content:space-between}
+  .pill{background:rgba(255,255,255,0.8);padding:8px 12px;border-radius:999px;font-weight:700;backdrop-filter:blur(6px)}
+  #confetti{position:absolute;left:0;top:0;pointer-events:none;z-index:5}
+  .footer{padding:12px;text-align:center;color:var(--muted)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <header>
+        <div class="brand">
+          <div class="logo">🔊</div>
+          <div>
+            <div class="title">শোনো — Sound Guess</div>
+            <div class="subtitle">শোনো, চিনো এবং চাপো — শ্রবণ দক্ষতার জন্য (বয়স 6–10)</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <div class="pill" id="scoreP">Score: 0</div>
+          <div class="pill" id="streakP">Streak: 0</div>
+        </div>
+      </header>
+
+      <main>
+        <section class="game-area">
+          <div class="panel playcard" id="playcard" style="position:relative">
+            <canvas id="confetti"></canvas>
+            <div class="sound-box" id="soundBox" aria-hidden="true">🔈</div>
+            <div class="controls">
+              <button id="playSound" class="btn primary">Play Sound ▶</button>
+              <button id="hintBtn" class="btn ghost">Show Hint</button>
+              <div class="small" id="timerDisp">Time: <strong id="timerVal">10</strong>s</div>
+            </div>
+
+            <div class="choices panel" id="choices" style="max-width:720px"></div>
+
+            <div style="display:flex;gap:8px;width:100%;justify-content:space-between;align-items:center;margin-top:6px">
+              <div class="small">Round <span id="roundNum">0</span> / <span id="roundTotal">10</span></div>
+              <div style="display:flex;gap:8px">
+                <button id="nextBtn" class="btn primary" style="display:none">Next ➜</button>
+                <button id="stopBtn" class="btn ghost">Stop</button>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:8px" class="small">টিপ: প্রথমে পেজে একবার ট্যাপ করলেই ফোনে সাউন্ড সরবরাহ চালু হবে।</div>
+        </section>
+
+        <aside class="side" style="display:flex;flex-direction:column;gap:12px">
+          <div class="panel">
+            <div class="small">Categories</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px" id="catButtons"></div>
+            <hr style="margin:10px 0;border:none;height:1px;background:#eee">
+            <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+              <div>
+                <div class="small">Mode</div>
+                <select id="modeSelect" style="padding:8px;border-radius:8px">
+                  <option value="quick">Quick (limitless)</option>
+                  <option value="round" selected>Round (10 rounds)</option>
+                </select>
+              </div>
+              <div>
+                <div class="small">Per-sound time</div>
+                <select id="timeSelect" style="padding:8px;border-radius:8px">
+                  <option value="8">8s</option>
+                  <option value="10" selected>10s</option>
+                  <option value="14">14s</option>
+                </select>
+              </div>
+            </div>
+            <hr style="margin:10px 0;border:none;height:1px;background:#eee">
+            <div style="display:flex;gap:8px;align-items:center;justify-content:space-between">
+              <div>
+                <div class="small">Voice hint (Bengali)</div>
+                <label style="display:inline-flex;align-items:center;gap:8px"><input id="voiceToggle" type="checkbox" checked> Speak name</label>
+              </div>
+              <div style="text-align:right">
+                <div class="small">High score</div>
+                <div id="highScore" style="font-weight:800">0</div>
+              </div>
+            </div>
+          </div>
+
+          <div class="panel">
+            <div class="small">Controls</div>
+            <div style="display:flex;gap:8px;margin-top:8px">
+              <button id="startBtn" class="btn primary">Start</button>
+              <button id="resetBtn" class="btn ghost">Reset</button>
+            </div>
+          </div>
+
+          <div class="panel small">
+            <div style="font-weight:700">Instructions</div>
+            <div style="margin-top:6px">বাজবে একটি শব্দ — তালিকা থেকে সঠিক আইটেমটি চাপো। ভুল করলে জীবন কমে — সঠিক হলে পয়েন্ট।</div>
+            <div style="margin-top:6px;color:var(--muted)">এই গেমটি ওয়েব-অডিও ব্যবহার করে স্বয়ংক্রিয় সাউন্ড তৈরী করে — কাজ করতে একবার স্পর্শ করুন।</div>
+          </div>
+        </aside>
+      </main>
+
+      <div class="footer">Have fun — practice listening! 👂🎧</div>
+    </div>
+  </div>
+
+<script>
+/* Sound Guess Game
+   - Synthesized sounds via WebAudio (no external files)
+   - Bengali UI for kids 6–10
+   - Categories, per-sound timer, scoring, streaks, confetti
+*/
+
+// ====================================================================
+// NEW: Map of sound IDs to external MP3 URLs for real sound effects
+// IMPORTANT: REPLACE THESE PLACEHOLDER URLs WITH ACTUAL MP3 LINKS
+// ====================================================================
+const REAL_SOUND_URLS = {
+  // Found a public domain source for Train Whistle
+  'train': 'https://example.com/sound-sfx/train-whistle-real.mp3',
+  // Found a free source for Dog Bark
+  'dog': 'https://example.com/sound-sfx/dog-bark-real.mp3',
+  // Found a CC0/Public Domain source for Cat Meow
+  'cat': 'https://example.com/sound-sfx/cat-meow-real.mp3',
+  // Found a free source for Lion Roar
+  'lion': 'https://example.com/sound-sfx/lion-roar-real.mp3',
+};
+
+
+// ----- DATA: items with a sound key used by synth mapping -----
+const ITEMS = [
+  // Vehicles
+  {name:"গাড়ি", emoji:"🚗", category:"Vehicles", sound:"car"},
+  {name:"বাস", emoji:"🚌", category:"Vehicles", sound:"bus"},
+  {name:"ট্রেন", emoji:"🚆", category:"Vehicles", sound:"train"},
+  {name:"বিমান", emoji:"✈️", category:"Vehicles", sound:"plane"},
+  // Animals & birds
+  {name:"কুকুর", emoji:"🐕", category:"Animals", sound:"dog"},
+  {name:"বিড়াল", emoji:"🐈", category:"Animals", sound:"cat"},
+  {name:"হাতি", emoji:"🐘", category:"Animals", sound:"elephant"},
+  {name:"লিঙ্গ", emoji:"🦁", category:"Animals", sound:"lion"},
+  {name:"তোতা", emoji:"🦜", category:"Birds", sound:"parrot"},
+  {name:"পাখি", emoji:"🐦", category:"Birds", sound:"bird"},
+  // Objects & things
+  {name:"ঘড়ি", emoji:"⌚", category:"Objects", sound:"clock"},
+  {name:"দরজা ঘণ্টি", emoji:"🔔", category:"Objects", sound:"bell"},
+  {name:"ফোন", emoji:"📱", category:"Objects", sound:"phone"},
+  {name:"তাল", emoji:"🥁", category:"Objects", sound:"drum"},
+  // Food/others (simple sounds)
+  {name:"বাঁশি", emoji:"🎶", category:"Instruments", sound:"flute"},
+  {name:"গরু", emoji:"🐄", category:"Animals", sound:"cow"},
+  {name:"নৌকা", emoji:"⛵", category:"Vehicles", sound:"boat"},
+  {name:"জল", emoji:"💧", category:"Nature", sound:"water"}
+];
+
+// available categories discovered from ITEMS
+const ALL_CATEGORIES = Array.from(new Set(ITEMS.map(i=>i.category)));
+ALL_CATEGORIES.unshift("All");
+
+// Game state and DOM elements
+let score = 0;
+let streak = 0;
+let round = 0;
+let running = false;
+let audioCtx;
+let currentItem;
+let timer;
+let timeLeft;
+let roundTotal = 10;
+let perTime = 10;
+
+const scoreP = document.getElementById('scoreP');
+const streakP = document.getElementById('streakP');
+const roundNum = document.getElementById('roundNum');
+const roundTotalEl = document.getElementById('roundTotal');
+const soundBox = document.getElementById('soundBox');
+const playSoundBtn = document.getElementById('playSound');
+const hintBtn = document.getElementById('hintBtn');
+const choicesEl = document.getElementById('choices');
+const nextBtn = document.getElementById('nextBtn');
+const stopBtn = document.getElementById('stopBtn');
+const timerVal = document.getElementById('timerVal');
+const startBtn = document.getElementById('startBtn');
+const resetBtn = document.getElementById('resetBtn');
+const catButtons = document.getElementById('catButtons');
+const modeSelect = document.getElementById('modeSelect');
+const timeSelect = document.getElementById('timeSelect');
+const voiceToggle = document.getElementById('voiceToggle');
+const highScoreEl = document.getElementById('highScore');
+
+// confetti canvas
+const confettiCanvas = document.getElementById('confetti');
+const confettiCtx = confettiCanvas.getContext('2d');
+let confettiPieces = [];
+let lastCf = 0;
+function resizeConfetti(){
+  confettiCanvas.width = soundBox.parentElement.offsetWidth;
+  confettiCanvas.height = soundBox.parentElement.offsetHeight;
+}
+window.addEventListener('resize', resizeConfetti);
+
+// speech synthesis
+function speak(text){
+  if('speechSynthesis' in window){
+    const synth = window.speechSynthesis;
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'bn-BD'; // Bengali (Bangladesh)
+    utterance.pitch = 1.0;
+    utterance.rate = 1.0;
+    synth.speak(utterance);
+  } else {
+    console.warn("Speech Synthesis not supported.");
+  }
+}
+
+// game flow
+function startGame(){
+  if(running) return;
+  running = true;
+  score = 0;
+  streak = 0;
+  round = 0;
+  if(modeSelect.value === 'round') roundTotal = 10;
+  else roundTotal = '∞';
+  nextBtn.textContent = 'Next ➜';
+  startBtn.disabled = true;
+  stopBtn.disabled = false;
+  resetBtn.disabled = true;
+  nextRound();
+}
+
+function endGame(){
+  running = false;
+  soundBox.textContent = '✅';
+  stopTimer();
+  // store high score
+  const hs = parseInt(highScoreEl.textContent, 10);
+  if(score > hs){
+    localStorage.setItem('highScore', score);
+    highScoreEl.textContent = score;
+  }
+  setTimeout(()=> soundBox.textContent = '🔈', 1200);
+  alert(`Game Over! Final Score: ${score}`);
+  startBtn.disabled = false;
+  stopBtn.disabled = true;
+  resetBtn.disabled = false;
+}
+
+function resetGame(){
+  if(running) endGame();
+  score = 0;
+  streak = 0;
+  round = 0;
+  roundTotal = 10;
+  updateHUD();
+  soundBox.textContent = '🔈';
+  choicesEl.innerHTML = '';
+  startBtn.disabled = false;
+  resetBtn.disabled = true;
+  nextBtn.style.display = 'none';
+  localStorage.setItem('highScore', 0);
+  highScoreEl.textContent = 0;
+}
+
+function nextRound(){
+  if(modeSelect.value === 'round' && round >= roundTotal){
+    endGame();
+    return;
+  }
+  
+  round++;
+  nextBtn.style.display = 'none';
+  soundBox.classList.remove('pulse');
+  soundBox.textContent = '🔈';
+
+  const pool = ITEMS.filter(item => selectedCategory === "All" || item.category === selectedCategory);
+  if(pool.length < 4){
+    alert("Not enough items in this category. Please select 'All' or another category.");
+    endGame();
+    return;
+  }
+
+  // select correct item
+  const correctIdx = Math.floor(Math.random() * pool.length);
+  currentItem = pool[correctIdx];
+
+  // select 3 other random unique items
+  const incorrectItems = [];
+  const allItemsCopy = [...pool];
+  allItemsCopy.splice(correctIdx, 1); // remove correct item
+
+  while(incorrectItems.length < 3 && allItemsCopy.length > 0){
+    const randIdx = Math.floor(Math.random() * allItemsCopy.length);
+    incorrectItems.push(allItemsCopy[randIdx]);
+    allItemsCopy.splice(randIdx, 1);
+  }
+  
+  const choices = shuffle([currentItem, ...incorrectItems]);
+
+  // render choices
+  choicesEl.innerHTML = '';
+  choices.forEach((ch, i) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.textContent = ch.name;
+    btn.onclick = () => choose(btn, ch);
+    btn.setAttribute('data-choice-idx', i+1);
+    choicesEl.appendChild(btn);
+  });
+
+  updateHUD();
+  
+  // auto play sound on new round
+  playSound();
+  
+  // start timer
+  runTimer();
+}
+
+function updateHUD(){
+  scoreP.textContent = `Score: ${score}`;
+  streakP.textContent = `Streak: ${streak}`;
+  roundNum.textContent = round;
+  roundTotalEl.textContent = roundTotal;
+  // load high score
+  const hs = localStorage.getItem('highScore') || 0;
+  highScoreEl.textContent = hs;
+}
+
+function playSound(){
+  if(soundBox.classList.contains('pulse')) return;
+  if(!currentItem) return;
+
+  // Visual feedback
+  soundBox.classList.add('pulse');
+  setTimeout(()=> soundBox.classList.remove('pulse'), 500);
+
+  // play sound
+  playSoundById(currentItem.sound);
+}
+
+function showHint(){
+  if(!currentItem) return;
+  soundBox.textContent = currentItem.emoji;
+  setTimeout(()=> soundBox.textContent = '🔈', 1800);
+  uiBeep();
+}
+
+// when user chooses
+function choose(btn, ch){
+  if(!running) return;
+  // disable all
+  Array.from(choicesEl.children).forEach(b=> b.disabled = true);
+  stopTimer();
+
+  if(ch.name === currentItem.name){
+    btn.classList.add('correct');
+    score += 10;
+    streak++;
+    burstConfetti(40);
+  } else {
+    btn.classList.add('wrong');
+    streak = 0;
+    // highlight correct
+    const corr = Array.from(choicesEl.children).find(b => b.textContent === currentItem.name);
+    if(corr) corr.classList.add('correct');
+  }
+  updateHUD();
+
+  // show emoji and speak answer if voice enabled
+  soundBox.textContent = currentItem.emoji;
+  if(voiceToggle.checked) speak(currentItem.name);
+
+  nextBtn.style.display = 'inline-block';
+
+  // if in quick mode, auto advance after short time
+  if(modeSelect.value === 'quick'){
+    setTimeout(()=> {
+      if(nextBtn.style.display !== 'none') nextBtn.click();
+    }, 900);
+  } else {
+    // if we've reached round total, end
+    if(round >= roundTotal){
+      setTimeout(()=> endGame(), 900);
+    }
+  }
+}
+
+// timer handling
+function runTimer(){
+  perTime = parseInt(timeSelect.value,10) || 10;
+  timeLeft = perTime;
+  timerVal.textContent = timeLeft;
+  clearInterval(timer);
+  timer = setInterval(()=>{
+    timeLeft--;
+    timerVal.textContent = timeLeft;
+    if(timeLeft <= 0){
+      clearInterval(timer);
+      // auto fail / show answer
+      const corr = Array.from(choicesEl.children).find(b => b.textContent === currentItem.name);
+      if(corr) corr.classList.add('correct');
+      Array.from(choicesEl.children).forEach(b=> b.disabled = true);
+      soundBox.textContent = currentItem.emoji;
+      nextBtn.style.display = 'inline-block';
+      streak = 0;
+      updateHUD();
+      if(modeSelect.value === 'quick'){
+        setTimeout(()=> { if(nextBtn.style.display !== 'none') nextBtn.click(); }, 900);
+      } else {
+        if(round >= roundTotal){ setTimeout(()=> endGame(), 900); }
+      }
+    }
+  }, 1000);
+}
+
+function stopTimer(){
+  clearInterval(timer);
+  timerVal.textContent = perTime;
+}
+
+// utility
+function shuffle(arr){
+  for(let i=arr.length-1;i>0;i--){
+    const j = Math.floor(Math.random() * (i+1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+// event listeners
+startBtn.addEventListener('click', startGame);
+nextBtn.addEventListener('click', nextRound);
+stopBtn.addEventListener('click', endGame);
+resetBtn.addEventListener('click', resetGame);
+playSoundBtn.addEventListener('click', playSound);
+hintBtn.addEventListener('click', showHint);
+
+// category buttons
+function makeCategoryButtons(){
+  ALL_CATEGORIES.forEach(cat => {
+    const b = document.createElement('button');
+    b.textContent = cat;
+    b.className = 'btn ghost';
+    b.onclick = ()=> { selectCategory(cat, b); };
+    catButtons.appendChild(b);
+    if(cat === "All") b.classList.add('primary');
+  });
+}
+makeCategoryButtons();
+
+let selectedCategory = "All";
+function selectCategory(cat, btn){
+  selectedCategory = cat;
+  // style
+  Array.from(catButtons.children).forEach(x => x.classList.remove('primary'));
+  btn.classList.add('primary');
+}
+
+// audio utilities & synth functions
+function ensureAudio(){
+  if(!audioCtx){
+    const AC = window.AudioContext || window.webkitAudioContext;
+    audioCtx = new AC();
+  }
+}
+
+// play small beep to indicate UI
+function uiBeep(){
+  ensureAudio();
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.type='sine';
+  o.frequency.value=880;
+  g.gain.value = 0.03;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  o.stop(audioCtx.currentTime + 0.08);
+}
+
+// ====================================================================
+// MODIFIED: synth mapping - check for real MP3 first, then fallback
+// ====================================================================
+function playSoundById(id){
+  // 1. Check for external URL and play if found
+  const externalUrl = REAL_SOUND_URLS[id];
+  if (externalUrl) {
+    // NOTE: This uses the simple HTML5 Audio API for easy external file playback.
+    const audio = new Audio(externalUrl);
+    // Add a catch for Promise-based play() to handle user gesture requirements
+    audio.play().catch(e => console.error(`Error playing external sound (${id}):`, e));
+    return; // Stop here, external sound played
+  }
+
+  // 2. Fallback to existing Web Audio synthesis for other sounds
+  ensureAudio();
+  const t0 = audioCtx.currentTime;
+
+  switch(id){
+    case 'car': // low engine rumble + short horn beep
+      {
+        const low = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        low.type='sawtooth';
+        low.frequency.value=60;
+        const lp = audioCtx.createBiquadFilter();
+        lp.type='lowpass';
+        lp.frequency.value=400;
+        g.gain.value = 0.05;
+        low.connect(lp);
+        lp.connect(g);
+        g.connect(audioCtx.destination);
+        low.start(t0);
+        low.frequency.exponentialRampToValueAtTime(40, t0+1.2);
+        low.stop(t0+1.4);
+
+        // horn
+        const horn = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        horn.type='square';
+        horn.frequency.value=440;
+        g2.gain.value = 0.06;
+        horn.connect(g2);
+        g2.connect(audioCtx.destination);
+        horn.start(t0+0.5);
+        g2.gain.exponentialRampToValueAtTime(0.0001, t0+0.58);
+        horn.stop(t0+0.6);
+      }
+      break;
+
+    case 'bus': // low honk + short rumble
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sawtooth';
+        o.frequency.value=120;
+        g.gain.value = 0.08;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        o.stop(t0+0.3);
+
+        const low = audioCtx.createOscillator();
+        const g2 = audioCtx.createGain();
+        low.type='sawtooth';
+        low.frequency.value=50;
+        g2.gain.value = 0.04;
+        low.connect(g2);
+        g2.connect(audioCtx.destination);
+        low.start(t0);
+        low.frequency.linearRampToValueAtTime(30, t0+1.5);
+        low.stop(t0+1.6);
+      }
+      break;
+
+    // case 'train': synth logic removed - using external URL
+    // case 'dog': synth logic removed - using external URL
+    // case 'cat': synth logic removed - using external URL
+
+    case 'elephant': // deep trumpet (low sine burst)
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sine';
+        o.frequency.value = 180;
+        g.gain.value=0.08;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        o.frequency.exponentialRampToValueAtTime(95, t0+0.8);
+        o.stop(t0+1.0);
+      }
+      break;
+
+    // case 'lion': synth logic removed - using external URL
+
+    case 'parrot': // chirpy tone (sine glide)
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sine';
+        o.frequency.value=900;
+        g.gain.value = 0;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        g.gain.linearRampToValueAtTime(0.08, t0+0.02);
+        o.frequency.exponentialRampToValueAtTime(1150, t0+0.34);
+        g.gain.linearRampToValueAtTime(0, t0+0.6);
+        o.start(t0);
+        o.stop(t0+0.7);
+      }
+      break;
+
+    case 'bird': // high quick chirp (FM)
+      {
+        const o = audioCtx.createOscillator();
+        const mod = audioCtx.createOscillator();
+        const modG = audioCtx.createGain();
+        const g = audioCtx.createGain();
+
+        o.type = 'sine';
+        o.frequency.value = 1800;
+        mod.type = 'square';
+        mod.frequency.value = 60;
+        modG.gain.value = 300;
+        g.gain.value = 0.08;
+
+        mod.connect(modG);
+        modG.connect(o.frequency);
+        o.connect(g);
+        g.connect(audioCtx.destination);
+
+        o.start(t0);
+        mod.start(t0);
+
+        o.stop(t0+0.1);
+        mod.stop(t0+0.1);
+      }
+      break;
+
+    case 'clock': // tick-tock
+      {
+        function tick(time){
+          const o = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+          o.type='square';
+          o.frequency.value=800;
+          g.gain.value = 0.05;
+          o.connect(g);
+          g.connect(audioCtx.destination);
+          o.start(time);
+          g.gain.exponentialRampToValueAtTime(0.0001, time + 0.05);
+          o.stop(time + 0.06);
+        }
+        tick(t0);
+        tick(t0 + 0.4);
+      }
+      break;
+
+    case 'bell': // simple chime
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sine';
+        o.frequency.value=1500;
+        g.gain.value = 0.08;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+1.2);
+        o.stop(t0+1.4);
+      }
+      break;
+
+    case 'phone': // ring tone
+      {
+        function ring(freq1, freq2, time){
+          const o1 = audioCtx.createOscillator();
+          const o2 = audioCtx.createOscillator();
+          const g = audioCtx.createGain();
+
+          o1.type='sine'; o1.frequency.value=freq1;
+          o2.type='sine'; o2.frequency.value=freq2;
+          g.gain.value = 0.04;
+
+          o1.connect(g); o2.connect(g);
+          g.connect(audioCtx.destination);
+
+          o1.start(time); o2.start(time);
+          o1.stop(time + 0.4); o2.stop(time + 0.4);
+        }
+        ring(480, 440, t0);
+        ring(480, 440, t0 + 0.6);
+      }
+      break;
+
+    case 'drum': // noise burst
+      {
+        const bufferSize = audioCtx.sampleRate * 0.1;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for(let i=0; i<bufferSize; i++) output[i] = (Math.random() * 2) - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const g = audioCtx.createGain();
+        g.gain.value = 0.2;
+        noise.connect(g);
+        const lp = audioCtx.createBiquadFilter();
+        lp.type = 'lowpass';
+        lp.frequency.value = 4000;
+        g.connect(lp);
+        lp.connect(audioCtx.destination);
+
+        noise.start(t0);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.1);
+        noise.stop(t0+0.12);
+      }
+      break;
+
+    case 'flute': // high, airy tone
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='triangle';
+        o.frequency.value=880;
+        g.gain.value = 0.08;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        o.stop(t0+0.8);
+      }
+      break;
+
+    case 'cow': // cow moo (low rounded)
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sine';
+        o.frequency.value=220;
+        g.gain.value=0.08;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        o.frequency.exponentialRampToValueAtTime(140, t0+0.7);
+        o.stop(t0+0.9);
+      }
+      break;
+
+    case 'boat': // horn-like short sound
+      {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.type='sine';
+        o.frequency.value=320;
+        g.gain.value=0.06;
+        o.connect(g);
+        g.connect(audioCtx.destination);
+        o.start(t0);
+        g.gain.linearRampToValueAtTime(0.06, t0+0.02);
+        g.gain.linearRampToValueAtTime(0.0001, t0+0.5);
+        o.stop(t0+0.52);
+      }
+      break;
+
+    case 'water': // quick noise burst
+      {
+        const bufferSize = audioCtx.sampleRate * 0.1;
+        const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+        const output = buffer.getChannelData(0);
+        for(let i=0; i<bufferSize; i++) output[i] = (Math.random() * 2) - 1;
+
+        const noise = audioCtx.createBufferSource();
+        noise.buffer = buffer;
+        const g = audioCtx.createGain();
+        g.gain.value = 0.08;
+        noise.connect(g);
+        g.connect(audioCtx.destination);
+
+        noise.start(t0);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0+0.08);
+        noise.stop(t0+0.1);
+      }
+      break;
+
+    default:
+      uiBeep();
+      break;
+  }
+}
+
+// confetti animation loop
+function burstConfetti(num){
+  const cx = confettiCanvas.width / 2;
+  const cy = soundBox.offsetTop + soundBox.offsetHeight / 2;
+  for(let i=0; i<num; i++){
+    confettiPieces.push({
+      x: cx,
+      y: cy,
+      vx: Math.random() * 8 - 4, // x velocity
+      vy: Math.random() * -10,  // y velocity
+      r: Math.random() * 6 + 3,  // radius
+      c: `hsl(${Math.random() * 360}, 100%, 75%)`, // color
+      life: 1800 + Math.random() * 600 // life in ms
+    });
+  }
+  if(!lastCf) requestAnimationFrame(drawConfetti);
+}
+
+function drawConfetti(ts){
+  if(!lastCf) lastCf = ts;
+  const dt = ts - lastCf;
+  lastCf = ts;
+
+  confettiCtx.clearRect(0,0, confettiCanvas.width, confettiCanvas.height);
+
+  for(let i=confettiPieces.length-1;i>=0;i--){
+    const p = confettiPieces[i];
+    p.x += p.vx * (dt/16);
+    p.y += p.vy * (dt/16);
+    p.vy += 0.05*(dt/16); // gravity
+    p.life -= dt;
+
+    confettiCtx.fillStyle = p.c;
+    confettiCtx.fillRect(p.x, p.y, p.r, p.r*0.6); // draw rectangle
+
+    if(p.life <= 0) confettiPieces.splice(i, 1);
+  }
+
+  if(confettiPieces.length > 0){
+    requestAnimationFrame(drawConfetti);
+  } else {
+    lastCf = 0;
+  }
+}
+
+// init
+function init(){
+  makeCategoryButtons();
+  updateHUD();
+  const hs = localStorage.getItem('highScore');
+  if(hs) highScoreEl.textContent = hs;
+}
+init();
+
+// cleanup for non-running state
+modeSelect.addEventListener('change', ()=> {
+  if(!running) {
+    if(modeSelect.value === 'round') roundTotal = 10;
+    else roundTotal = '∞';
+    updateHUD();
+  }
+});
+
+// keyboard helpers (1..4)
+window.addEventListener('keydown', (e)=>{
+  if(!running) return;
+  if(e.key >= '1' && e.key <= '4'){
+    const idx = parseInt(e.key)-1;
+    const btn = choicesEl.children[idx];
+    if(btn) btn.click();
+  }
+});
+
+// initialize pool when category changed
+function initCategoryChange(){
+  // clicking category buttons toggles selectedCategory (handled earlier)
+  // but let's ensure selectedCategory variable is set
+  selectedCategory = "All";
+}
+initCategoryChange();
+
+// when selecting category, rebuild pool on next start
+// Cat buttons already wired to selectCategory()
+
+// auto-play on start if desired
+// done in nextRound()
+
+// initial HUD
+updateHUD();
+
+// small visual pulse class
+const style = document.createElement('style');
+style.innerHTML = `.pulse{transform:scale(1.04);transition:transform .18s}`;
+document.head.appendChild(style);
+
+// resume audio on first user gesture (mobile)
+['click','touchstart','keydown'].forEach(ev => window.addEventListener(ev, ()=>{ if(audioCtx && audioCtx.state === 'suspended') audioCtx.resume(); }));
+
+// ensure confetti canvas size on load
+setTimeout(resizeConfetti, 200);
+// autoplay a test sound on first user gesture once (UI...
+</script>
+</body>
+</html>
