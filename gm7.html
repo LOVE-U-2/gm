@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🧩 Puzzle Game | Kids Game Zone</title>
+  <style>
+    body {
+      background: linear-gradient(135deg, #ff0077, #00ffb7);
+      font-family: 'Comic Sans MS', cursive;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    h1 {
+      color: #ff9f1c;
+      text-shadow:  2px 2px #fff;
+      margin-bottom: 10px;
+      animation: bounce 2s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-8px); }
+    }
+
+    .controls {
+      display: flex;
+      gap: 15px;
+      align-items: center;
+      margin-bottom: 15px;
+    }
+
+    /* সাজেশন বক্সের জন্য */
+    .suggestion-box {
+      margin-top: 10px;
+      margin-bottom: 20px;
+      border: 3px solid #ff9f1c;
+      border-radius: 10px;
+      padding: 5px;
+      background: #baf0ff;
+      text-align: center;
+    }
+
+    .suggestion-box h3 {
+      color: #fd0069;
+      margin-top: 0;
+      margin-bottom: 5px;
+      font-size: 1.1em;
+    }
+
+    #originalImage {
+      width: 150px; /* ছোট সাইজ */
+      height: 150px;
+      border-radius: 8px;
+      box-shadow: 0 2px 5px rgba(0, 59, 254, 0.511);
+    }
+    
+    .puzzle-container {
+      display: grid;
+      grid-template-columns: repeat(3, 100px);
+      grid-template-rows: repeat(3, 100px);
+      gap: 5px;
+      margin-top: 20px;
+      background: #ffe;
+      padding: 10px;
+      border-radius: 15px;
+      border: 8px solid #00e0ff;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    }
+
+    .piece {
+      width: 100px;
+      height: 100px;
+      background-size: 300px 300px;
+      border-radius: 10px;
+      cursor: grab;
+      transition: transform 0.2s;
+    }
+
+    .piece:hover {
+      transform: scale(1.05);
+    }
+
+    button, select {
+      background: linear-gradient(145deg, #09ad00, #1500fa, #cb0000);
+      color: #fff;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      padding: 10px 20px;
+      cursor: pointer;
+      box-shadow: 0 3px 5px rgba(0,0,0,0.2);
+      -webkit-appearance: none;
+      -moz-appearance: none;
+      appearance: none;
+    }
+
+    button:hover, select:hover {
+      background: #00a896;
+    }
+
+  /* পুরনো modal অংশ মুছে দিয়ে নতুন Win Box */
+  .win-box {
+    display: none; /* শুরুতে লুকানো থাকবে */
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.8), rgba(255,223,186,0.8));
+    justify-content: center;
+    align-items: center;
+    z-index: 999;
+    animation: fadeIn 0.5s ease-in-out;
+  }
+
+  @keyframes fadeIn {
+    from {opacity: 0;}
+    to {opacity: 1;}
+  }
+
+  .win-card {
+    background: #fffb0037;
+    color: #00c903;
+    padding: 40px 30px;
+    border-radius: 25px;
+    text-align: center;
+    box-shadow: 0 0 25px rgb(243, 0, 0);
+    transform: scale(0.9);
+    animation: pop 0.5s ease forwards;
+  }
+
+  @keyframes pop {
+    to { transform: scale(1); }
+  }
+
+  .win-card h2 {
+    font-size: 2.5em;
+    margin-bottom: 10px;
+    text-shadow: 2px 2px #00000033;
+  }
+
+  .win-card p {
+    font-size: 1.2em;
+    margin-bottom: 20px;
+  }
+
+  .win-card button {
+    background: #00ffd5;
+    color: #ff0000;
+    font-weight: bold;
+    padding: 10px 25px;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1.1em;
+    transition: 0.3s;
+  }
+
+  .win-card button:hover {
+    background: #0e9100;
+    color: #ffffff;
+    transform: scale(1.1);
+  }
+
+  /* ছোট ছোট কনফেটি ইফেক্ট */
+  .confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #ff6b6b27;
+    border-radius: 50%;
+    animation: fall 2s linear infinite;
+  }
+
+  @keyframes fall {
+    from { transform: translateY(-50px); opacity: 1; }
+    to { transform: translateY(400px) rotate(360deg); opacity: 0; }
+  }
+
+  </style>
+</head>
+<body>
+  <h1>🧩 Image Puzzle !</h1>
+  <p style="color:#ffffff;">ছবিটি সম্পূর্ণ করতে টুকরোগুলো টেনে আনুন এবং ফেলে দিন 🎨</p>
+
+  <div class="controls">
+    <label for="imageSelect" style="color:#eeff00; font-weight:bold;">একটি ছবি বেছে নিন:</label>
+    <select id="imageSelect" onchange="changeImage()">
+      </select>
+    <button onclick="shuffle()">🔀 Shuffle</button>
+  </div>
+
+  <div class="suggestion-box">
+    <h3>Original Picture (দেখে মেলাও)</h3>
+    <img id="originalImage" src="" alt="Original Puzzle Image">
+  </div>
+  <div class="puzzle-container" id="puzzleContainer"></div>
+
+  <div id="winBox" class="win-box">
+  <div class="win-card">
+    <h2>🎉 বাহ! অসাধারণ!</h2>
+    <p>তুমি পাজলটি সম্পূর্ণ করেছ! তুমি একজন সত্যিকারের পাজল মাস্টার! 🧩</p>
+    <button onclick="closeWin()">আবার খেলো</button>
+  </div>
+</div>
+  <script>
+    const container = document.getElementById('puzzleContainer');
+    const imageSelect = document.getElementById('imageSelect');
+    const originalImageEl = document.getElementById('originalImage');
+    const winModal = document.getElementById('winModal'); // নতুন Modal El
+
+    // 1. List of available images
+    const images = [
+  // 🍎 ফল (Fruits)
+  { name: "আম", url: "https://media.istockphoto.com/id/529964085/photo/mango.jpg?s=612x612&w=0&k=20&c=rmcMZlLOZFdn4NhUcjnaJ3EBHKYZQ4xH4xzpzFU4JgY=" },
+  { name: "আনারস", url: "https://png.pngtree.com/png-vector/20240906/ourmid/pngtree-realistic-pineapple-clipart-illustration-tropical-fruit-graphic-png-image_13764427.png" },
+  { name: "কলা", url: "https://e7.pngegg.com/pngimages/595/523/png-clipart-six-ripe-banana-juice-banana-powder-flavor-fruit-yellow-bananas-natural-foods-food-thumbnail.png" },
+  { name: "আপেল", url: "https://i.pinimg.com/736x/c4/d9/ee/c4d9eefa0d4136938ed03c7359286f7a.jpg" },
+  { name: "কমলা", url: "https://png.pngtree.com/png-clipart/20190515/original/pngtree-orange-png-png-image_3619070.jpg" },
+  { name: "পেঁপে", url: "https://res.cloudinary.com/dnhisjizq/image/upload/v1604397128/products/qgn3fbmuxc7zvevc0p92.jpg" },
+
+  // 🌸 ফুল (Flowers)
+  { name: "গোলাপ", url: "https://play-lh.googleusercontent.com/RS9nNwcMo_ooTZUV0X8eC3bEz9AgQQWN92EDFNL43K-oHDY1YLqpA-bibJMAjZGjVg" },
+  { name: "জবা", url: "https://cf-img-a-in.tosshub.com/sites/visualstory/wp/2023/08/hibiscus.png?size=*:900" },
+  { name: "সূর্যমুখী", url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS4eeDGR365CfgmlGoiDSIbWjBOuk1WUyGUPA&s" },
+  { name: "গাঁদা", url: "https://pngfile.net/files/preview/960x960/43817424930342gvtantztg4vbmmuaxza6ndvsifa7zidzeyjzmbux8hkryhxldylr70fw3gv81mqkkkraksifixv0pqdczdi1b0hvrzdmknzn1f2.png" },
+  { name: "টিউলিপ", url: "https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEjEFuva3iqtxUm_HB2C2K2xTSUG3DBzsHxJs4rwBTcdSqzTVyHCvGYY33Vp8cxIarcqXrg8fy-0hmcm80hF0FRqJJYQ0hYEZcBU-KcVavUVJK3C_n-xqna8BelYentKMLBYsO-tmHulXPk/s1600/tulips-flowers.jpg" },
+
+  // 🥦 সবজি (Vegetables)
+  { name: "বেগুন", url: "https://img.cdnx.in/265740/1665771332017_SKU-0008_0.jpeg?width=600&format=webp" },
+  { name: "টমেটো", url: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/89/Tomato_je.jpg/1200px-Tomato_je.jpg" },
+  { name: "গাজর", url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSyhjn93j54pVBcA2A_yUq3vVMWlTmZ1Ugc5A&s" },
+  { name: "লাউ", url: "https://cf-img-a-in.tosshub.com/sites/visualstory/stories/2023_03/story_25101/assets/4.jpeg?time=1678029681" },
+  { name: "আলু", url: "https://www.gbegbe.com/images/thumbs/0001917_big-potato-net-weight-50-gm-1-kg_510.png" },
+
+  // 🐘 প্রাণী (Animals)
+  { name: "হাতি", url: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTF_f27RAgstbHSpZbtdnyFzDvKZccxW_Q_-w&s" },
+  { name: "বাঘ", url: "https://uttarbangasambad.com/wp-content/uploads/2024/07/tiger.gif" },
+  { name: "গরু", url: "https://cdn.ittefaqbd.com/contents/cache/images/640x358x1/uploads/media/2024/06/08/0bc06f1786f652bae6bf4d04d8c207da-666403cce6979.jpg?jadewits_media_id=172288" },
+  { name: "বিড়াল", url: "https://upload.wikimedia.org/wikipedia/commons/3/3a/Cat03.jpg" },
+  { name: "কুকুর", url: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Golden_Retriever_medium-to-light-coat.jpg" },
+
+  // 🦜 পাখি (Birds)
+  { name: "তোতা", url: "https://upload.wikimedia.org/wikipedia/commons/3/32/Blue-fronted_Amazon.jpg" },
+  { name: "চড়ুই", url: "https://upload.wikimedia.org/wikipedia/commons/d/d1/House_sparrow04.jpg" },
+  { name: "ময়ূর", url: "https://upload.wikimedia.org/wikipedia/commons/f/fd/Peacock_Plumage.jpg" },
+  { name: "পায়রা", url: "https://upload.wikimedia.org/wikipedia/commons/0/0b/Columba_livia_2_%28Lukasz_Lukasik%29.jpg" },
+  { name: "কাক", url: "https://upload.wikimedia.org/wikipedia/commons/f/f8/Crow_bird.jpg" }
+];
+
+    let pieces = [];
+    let currentImage = images[0].url;
+
+    // Populate the dropdown menu
+    images.forEach((img, index) => {
+      const option = document.createElement('option');
+      option.value = img.url;
+      option.textContent = img.name;
+      imageSelect.appendChild(option);
+    });
+
+    // 3. Function to change the puzzle image
+    function changeImage() {
+      currentImage = imageSelect.value;
+      originalImageEl.src = currentImage; 
+      createPuzzle();
+    }
+
+    function createPuzzle() {
+      container.innerHTML = '';
+      pieces = [];
+      
+      originalImageEl.src = currentImage; 
+
+      for (let i = 0; i < 9; i++) {
+        const piece = document.createElement('div');
+        piece.className = 'piece';
+        piece.style.backgroundImage = `url(${currentImage})`;
+        const x = (i % 3) * -100;
+        const y = Math.floor(i / 3) * -100;
+        piece.style.backgroundPosition = `${x}px ${y}px`;
+        piece.setAttribute('data-index', i);
+        piece.draggable = true;
+        piece.addEventListener('dragstart', dragStart);
+        piece.addEventListener('drop', drop);
+        piece.addEventListener('dragover', allowDrop);
+        pieces.push(piece);
+        container.appendChild(piece);
+      }
+      shuffle();
+    }
+
+    function shuffle() {
+      if (pieces.length === 0) return; 
+
+      pieces.sort(() => Math.random() - 0.5);
+      container.innerHTML = '';
+      pieces.forEach(p => container.appendChild(p));
+    }
+
+    let dragged;
+
+    function dragStart(e) {
+      dragged = this;
+    }
+
+    function allowDrop(e) {
+      e.preventDefault();
+    }
+
+    function drop(e) {
+      e.preventDefault();
+      const target = this;
+      if (!target.classList.contains('piece')) return; 
+
+      const draggedIndex = Array.from(container.children).indexOf(dragged);
+      const targetIndex = Array.from(container.children).indexOf(target);
+      if (draggedIndex === targetIndex) return;
+
+      container.insertBefore(dragged, target);
+      if (targetIndex < draggedIndex) {
+        container.insertBefore(target, container.children[draggedIndex + 1]);
+      } else {
+        container.insertBefore(target, container.children[draggedIndex]);
+      }
+
+      checkWin();
+    }
+
+    function checkWin() {
+      const current = Array.from(container.children).map(el => el.getAttribute('data-index'));
+      if (current.join('') === '012345678') {
+        showWinMessage(); // অ্যালার্টের পরিবর্তে নতুন ফাংশন
+      }
+    }
+
+    const winBox = document.getElementById('winBox');
+
+function showWinMessage() {
+  winBox.style.display = 'flex';
+  // ছোট কনফেটি তৈরি
+  for (let i = 0; i < 20; i++) {
+    const confetti = document.createElement('div');
+    confetti.className = 'confetti';
+    confetti.style.left = Math.random() * 100 + '%';
+    confetti.style.background = `hsl(${Math.random() * 360}, 80%, 60%)`;
+    confetti.style.animationDelay = `${Math.random()}s`;
+    winBox.appendChild(confetti);
+    setTimeout(() => confetti.remove(), 2000);
+  }
+}
+
+function closeWin() {
+  winBox.style.display = 'none';
+  shuffle();
+}
+
+    createPuzzle(); // Initial creation
+  </script>
+</body>
+</html>
